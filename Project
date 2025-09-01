@@ -1,0 +1,63 @@
+// SPDX-License-Identifier: MIT
+pragma solidity ^0.8.0;
+
+contract ProjectFunding {
+    address public owner;
+    uint public votingDeadline;
+    bool public fundsDistributed = false;
+
+    struct Project {
+        string description;
+        address payable creator;
+        uint goal;
+        uint votes;
+    }
+
+    Project[] public projects;
+    mapping(address => bool) public hasVoted;
+
+    constructor(uint _votingDuration) {
+        owner = msg.sender;
+        votingDeadline = block.timestamp + _votingDuration;
+    }
+    
+    function proposeProject(string memory _description, uint _goal) public {
+        require(block.timestamp < votingDeadline, "Voting is completed");
+        projects.push(Project(_description, payable(msg.sender), _goal, 0));
+    }
+    
+    function vote(uint index) public {
+        require(block.timestamp < votingDeadline, "Voting is completed");
+        require(!hasVoted[msg.sender], "You have already voted");
+        require(index < projects.length, "Invalid project index");
+
+        projects[index].votes++;
+        hasVoted[msg.sender] = true;
+    }
+
+    function distributeFunds() public payable {
+        require(block.timestamp >= votingDeadline, "Voting is not over yet");
+        require(!fundsDistributed, "Funding has already been provided");
+        require(projects.length > 0, "No projects");
+        uint maxVotes = 0;
+        uint winnerIndex = 0;
+
+        for (uint i = 0; i < projects.length; i++) {
+            if (projects[i].votes > maxVotes) {
+                maxVotes = projects[i].votes;
+                winnerIndex = i;
+            }
+        }
+
+        Project storage winner = projects[winnerIndex];
+        require(address(this).balance >= winner.goal, "Insufficient funds");
+
+        winner.creator.transfer(winner.goal);
+        fundsDistributed = true;
+    }
+
+    function getProjects() public view returns (Project[] memory) {
+        return projects;
+    }
+    receive() external payable {}
+}
