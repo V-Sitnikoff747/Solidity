@@ -1,0 +1,38 @@
+// SPDX-License-Identifier: MIT
+pragma solidity ^0.8.0;
+
+contract SubscriptionService {
+    address public admin;
+    uint public subscriptionPrice = 0.01 ether;
+    uint public subscriptionDuration = 30 days;
+
+    mapping(address => uint) public subscriptions;
+
+    constructor() {
+        admin = msg.sender;
+    }
+    function subscribe() public payable {
+        require(msg.value >= subscriptionPrice, "Insufficient funds");
+        if (block.timestamp < subscriptions[msg.sender]) {
+            subscriptions[msg.sender] += subscriptionDuration;
+        } else {
+            subscriptions[msg.sender] = block.timestamp + subscriptionDuration;
+        }
+    }
+
+    
+    function isSubscribed(address user) public view returns (bool) {
+        return subscriptions[user] >= block.timestamp;
+    }
+
+    
+    function setSubscriptionPrice(uint _price) public {
+        require(msg.sender == admin, "Only admin can change the price");
+        subscriptionPrice = _price;
+    }
+
+    function withdraw() public {
+        require(msg.sender == admin, "Admin only");
+        payable(admin).transfer(address(this).balance);
+    }
+}
