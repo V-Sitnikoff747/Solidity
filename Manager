@@ -1,0 +1,22 @@
+// SPDX-License-Identifier: MIT
+pragma solidity >= 0.8.0 < 0.9.0;
+
+contract TaskManager {
+string [] private  tasks; 
+
+function addTask(string memory _task) public { tasks.push(_task);}
+
+function removeTask (uint _index) public { 
+    require( _index < tasks.length, "Invalid index");
+    tasks[_index]= tasks[tasks.length-1];
+    tasks.pop(); }
+function getTasks()public view  {
+    for (uint i=0; i<tasks.length; i++ )
+    {
+        tasks[i];
+    }
+    
+}
+
+ 
+}
