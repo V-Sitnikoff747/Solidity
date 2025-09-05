@@ -1,0 +1,67 @@
+/ SPDX-License-Identifier: MIT
+pragma solidity  >=0.8.0 < 0.9.0;
+
+contract GrandmaGifts {
+    address public grandma;
+    uint public totalGrandkids;
+    uint public giftAmountPerKid;
+    bool public initialized;
+
+    struct Grandkid {
+        address wallet;
+        uint birthdayTimestamp;
+        bool hasClaimed;
+    }
+
+    mapping(address => Grandkid) public grandkids;
+    address[] public grandkidList;
+
+    modifier onlyGrandma() {
+        require(msg.sender == grandma, "Only grandma can do this");
+        _;
+    }
+
+    constructor() {
+        grandma = msg.sender;
+    }
+
+    function initializeGifts(address[] calldata _grandkids, uint[] calldata _birthdays) external payable onlyGrandma {
+        require(!initialized, "Already initialized");
+        require(_grandkids.length == _birthdays.length, "Mismatched arrays");
+        require(_grandkids.length > 0, "No grandkids");
+
+        totalGrandkids = _grandkids.length;
+        giftAmountPerKid = msg.value / totalGrandkids;
+        require(giftAmountPerKid > 0, "Too little ETH");
+
+        for (uint i = 0; i < _grandkids.length; i++) {
+            address kid = _grandkids[i];
+            grandkids[kid] = Grandkid({
+                wallet: kid,
+                birthdayTimestamp: _birthdays[i],
+                hasClaimed: false
+            });
+            grandkidList.push(kid);
+        }
+
+        initialized = true;
+    }
+
+    function claimGift() external {
+        Grandkid storage kid = grandkids[msg.sender];
+        require(kid.wallet != address(0), "Not a registered grandkid");
+        require(block.timestamp >= kid.birthdayTimestamp, "Too early");
+        require(!kid.hasClaimed, "Already claimed");
+
+        kid.hasClaimed = true;
+        payable(msg.sender).transfer(giftAmountPerKid);
+    }
+
+    function getGrandkidList() external view returns (address[] memory) {
+        return grandkidList;
+    }
+
+    function contractBalance() external view returns (uint) {
+        return address(this).balance;
+    }
+}
