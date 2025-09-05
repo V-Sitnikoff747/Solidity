@@ -1,0 +1,48 @@
+// SPDX-License-Identifier: MIT
+pragma solidity  >=0.8.0 < 0.9.0;
+
+library LibraryArray{
+
+function searchElement(uint[] memory self, uint element) public pure returns (int) {
+    for (uint i = 0; i < self.length; i++) {
+        if (self[i] == element) {
+            return int(i); 
+        }
+    }
+    return -1; 
+}
+
+
+function sortAscending(uint[] memory self) internal pure {
+    uint n = self.length;
+    for (uint i = 0; i < n; i++) {
+        for (uint j = 0; j < n - 1 - i; j++) {
+            if (self[j] > self[j + 1]) {
+                (self[j], self[j + 1]) = (self[j + 1], self[j]);
+            }
+        }
+    }
+}
+
+function sortDescending(uint[] memory self) internal pure {
+    uint n = self.length;
+    for (uint i = 0; i < n; i++) {
+        for (uint j = 0; j < n - 1 - i; j++) {
+            if (self[j] < self[j + 1]) {
+                (self[j], self[j + 1]) = (self[j + 1], self[j]);
+            }
+        }
+    }
+}
+
+function removeElement ( uint[] storage self, uint index) internal  {  
+require(index< self.length,  "Index out of bounds");
+for(uint i= index; i<self.length-1; i++){
+    self[i]=self[i+1];
+}
+self.pop();
+}
+
+}
+
+
