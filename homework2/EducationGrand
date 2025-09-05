@@ -1,0 +1,110 @@
+// SPDX-License-Identifier: MIT
+pragma solidity  >=0.8.0 < 0.9.0;
+
+contract EducationGrand {
+address public owner;
+struct Student {
+        address wallet;
+        uint256 balance;
+        bool goalAchieved;
+        bool isFrozen;
+        uint256 performance; 
+    }
+
+mapping  (address => Student) public students;
+
+    event StudentRegistered(address indexed student, uint256 amount);
+    event GoalConfirmed(address indexed student);
+    event GrantPaid(address indexed student, uint256 amount);
+    event FundsFrozen(address indexed student);
+    event FundsUnfrozen(address indexed student);
+
+    modifier onlyOwner() {
+        require(msg.sender == owner, "Only owner");
+        _;
+    }
+
+    modifier onlyStudent() {
+        require(students[msg.sender].wallet == msg.sender, "Only student");
+        _;
+    }
+
+    constructor() {
+        owner = msg.sender;
+    }
+
+ function registerStudent(uint256 performance) external payable {
+        require(msg.value > 0, "Need to deposit money.");
+        require(students[msg.sender].wallet == address(0), "Student is already registered");
+
+        students[msg.sender] = Student({
+            wallet: msg.sender,
+            balance: msg.value,
+            goalAchieved: false,
+            isFrozen: false,
+            performance: performance
+        });
+
+        emit StudentRegistered(msg.sender, msg.value);
+    }
+
+
+    function confirmGoal(address studentAddress) external onlyOwner {
+        require(students[studentAddress].wallet != address(0), "Student not found");
+        students[studentAddress].goalAchieved = true;
+
+        emit GoalConfirmed(studentAddress);
+    }
+
+
+    function claimGrant() external onlyStudent {
+        Student storage student = students[msg.sender];
+
+        require(student.goalAchieved, "Target not confirmed");
+        require(!student.isFrozen, "Funds are frozen");
+        require(student.balance > 0, "No funds available");
+
+        uint256 grantAmount = calculateGrant(student.performance, student.balance);
+        uint256 remaining = student.balance - grantAmount;
+        student.balance = 0;
+
+        payable(student.wallet).transfer(grantAmount);
+
+        emit GrantPaid(student.wallet, grantAmount);
+        if (remaining > 0) {
+            
+        }
+    }
+
+
+    function calculateGrant(uint256 performance, uint256 total) internal pure returns (uint256) {
+        if (performance >= 90) {
+            return total; 
+        } else if (performance >= 75) {
+            return (total * 80) / 100; 
+        } else if (performance >= 60) {
+            return (total * 60) / 100; 
+        } else {
+            return (total * 40) / 100; 
+        }
+    }
+
+    
+    function freezeFunds(address studentAddress) external onlyOwner {
+        students[studentAddress].isFrozen = true;
+        emit FundsFrozen(studentAddress);
+    }
+
+    
+    function unfreezeFunds(address studentAddress) external onlyOwner {
+        students[studentAddress].isFrozen = false;
+        emit FundsUnfrozen(studentAddress);
+    }
+
+    
+    function getStudentBalance(address studentAddress) external view returns (uint256) {
+        return students[studentAddress].balance;
+    }
+
+    receive() external payable {}
+}
