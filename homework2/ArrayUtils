@@ -1,0 +1,33 @@
+// SPDX-License-Identifier: MIT
+pragma solidity ^0.8.0;
+
+import "./LibraryArray.sol";
+contract ArrayUtils {
+    using LibraryArray for uint[];
+
+    uint[] public data;
+
+    function add(uint value) external {
+        data.push(value);
+    }
+
+    function find(uint value) external view returns (int) {
+        return data.searchElement(value); 
+    }
+
+    function removeAt(uint index) external {
+        data.removeElement(index);
+    }
+
+    function sortArrayPerDescending() external view {
+        data.sortDescending();
+    }
+
+    function sortArrayPerAscending() external view{
+        data.sortAscending();
+    }
+
+    function getAll() external view returns (uint[] memory) {
+        return data;
+    }
+}
